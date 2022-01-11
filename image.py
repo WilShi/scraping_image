@@ -1,3 +1,4 @@
+# coding: utf-8
 # author: Wenbo Shi
 #aim:爬取google图片
 
