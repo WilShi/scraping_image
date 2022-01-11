@@ -7,6 +7,7 @@ import time
 import os
 import requests
 import sys
+import zipfile
 
 # 使用代理的方法 ，可以直接windows使用代理，不用这么麻烦
 # browserOptions = webdriver.ChromeOptions()
@@ -38,16 +39,17 @@ class Crawler_google_images:
         return browser
 
     #下载图片
-    def download_images(self, browser,round=2):
-        picpath = './image'
+    def download_images(self, browser, round=2, dir='image'):
+        picpath = './{}'.format(dir)
         # 路径不存在时创建一个
         if not os.path.exists(picpath): os.makedirs(picpath)
         # 记录下载过的图片地址，避免重复下载
         img_url_dic = []
 
-        count = 0 #图片序号
+        count = 1 #图片序号
         pos = 0
         for i in range(round):
+            print("目前正在下载第 {} 页的图片......".format(str(i+1)))
             pos += 500
             # 向下滑动
             js = 'var q=document.documentElement.scrollTop=' + str(pos)
@@ -72,7 +74,7 @@ class Crawler_google_images:
                                 try:
                                     img_url_dic.append(img_url)
                                     #下载并保存图片到当前目录下
-                                    filename = "./image/" + str(count) + ".jpg"
+                                    filename = "./{}/".format(dir) + str(count) + ".jpg"
                                     r = requests.get(img_url)
                                     with open(filename, 'wb') as f:
                                         f.write(r.content)
@@ -84,21 +86,32 @@ class Crawler_google_images:
                                 except:
                                     print('failure')
 
-    def run(self, url):
+    def run(self, url, page=20, dir='image'):
         self.__init__()
         browser = self.init_browser(url)
-        self.download_images(browser,20)#可以修改爬取的页面数，基本10页是100多张图片
+        self.download_images(browser, int(page), dir)#可以修改爬取的页面数，基本10页是100多张图片
         browser.close()
-        print("爬取完成")
+        self.zipf(dir)
+        print('#'*50)
+        print("爬取和打包文件完成！！！！")
+        print('#'*50)
+
+    def zipf(self, dir):
+        zip = zipfile.ZipFile('./{}.zip'.format(dir), 'w', zipfile.ZIP_DEFLATED)
+        zip.write('./{}'.format(dir))
+        zip.close()
 
 
 if __name__ == '__main__':
 
-    if len(sys.argv) == 2:
-        craw = Crawler_google_images()
-        craw.run(sys.argv[1])
+    craw = Crawler_google_images()
+
+    if len(sys.argv) == 4:
+        craw.run(sys.argv[1], sys.argv[2], sys.argv[3])
+    elif sys.argv[1] == "zip":
+        craw.zipf(sys.argv[2])
     else:
-        print("{error: 1, msg: python image.py 'baidu image url'}")
+        print("{error: 1, msg: python image.py ['baidu image url', zip] [page, dirName] [dirName, '']}")
 
     # print(url)
 
