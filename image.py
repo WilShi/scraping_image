@@ -106,10 +106,13 @@ if __name__ == '__main__':
 
     craw = Crawler_google_images()
 
-    if len(sys.argv) == 4:
-        craw.run(sys.argv[1], sys.argv[2], sys.argv[3])
-    elif sys.argv[1] == "zip":
-        craw.zipf(sys.argv[2])
+    if len(sys.argv) > 2:
+        if len(sys.argv) == 4:
+            craw.run(sys.argv[1], sys.argv[2], sys.argv[3])
+        elif sys.argv[1] == "zip":
+            craw.zipf(sys.argv[2])
+        else:
+            print("{error: 1, msg: python image.py ['baidu image url', zip] [page, dirName] [dirName, '']}")
     else:
         print("{error: 1, msg: python image.py ['baidu image url', zip] [page, dirName] [dirName, '']}")
 
