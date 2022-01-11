@@ -6,6 +6,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 import time
 import os
 import requests
+import sys
 
 # 使用代理的方法 ，可以直接windows使用代理，不用这么麻烦
 # browserOptions = webdriver.ChromeOptions()
@@ -16,22 +17,22 @@ import requests
 # keyword = '戴眼镜的人'
 # url = 'https://www.google.com.hk/search?q='+keyword+'&tbm=isch'
 
-url = 'https://image.baidu.com/search/index?tn=baiduimage&ipn=r&ct=201326592&cl=2&lm=-1&st=-1&fm=result&fr=&sf=1&fmq=1641819994082_R&pv=&ic=&nc=1&z=&hd=&latest=&copyright=&se=1&showtab=0&fb=0&width=&height=&face=0&istype=2&dyTabStr=MCwzLDIsMSw0LDYsNSw3LDgsOQ%3D%3D&ie=utf-8&sid=&word=%E6%88%B4%E7%9C%BC%E7%94%B7%E4%BA%BA'
+# url = 'https://image.baidu.com/search/index?tn=baiduimage&ipn=r&ct=201326592&cl=2&lm=-1&st=-1&fm=result&fr=&sf=1&fmq=1641819994082_R&pv=&ic=&nc=1&z=&hd=&latest=&copyright=&se=1&showtab=0&fb=0&width=&height=&face=0&istype=2&dyTabStr=MCwzLDIsMSw0LDYsNSw3LDgsOQ%3D%3D&ie=utf-8&sid=&word=%E6%88%B4%E7%9C%BC%E7%94%B7%E4%BA%BA'
 
 
 class Crawler_google_images:
     # 初始化
-    def __init__(self):
-        self.url = url
+    # def __init__(self):
+    #     self.url = url
 
     # 获得Chrome驱动，并访问url
-    def init_browser(self):
+    def init_browser(self, url):
         # chrome_options = webdriver.ChromeOptions()
         # chrome_options.add_argument("--disable-infobars")
         # browser = webdriver.Chrome(chrome_options=chrome_options)
         browser = webdriver.Chrome(ChromeDriverManager().install())
         # 访问url
-        browser.get(self.url)
+        browser.get(url)
         # 最大化窗口，之后需要爬取窗口中所见的所有图片
         browser.maximize_window()
         return browser
@@ -83,17 +84,21 @@ class Crawler_google_images:
                                 except:
                                     print('failure')
 
-    def run(self):
+    def run(self, url):
         self.__init__()
-        browser = self.init_browser()
+        browser = self.init_browser(url)
         self.download_images(browser,20)#可以修改爬取的页面数，基本10页是100多张图片
         browser.close()
         print("爬取完成")
 
 
 if __name__ == '__main__':
-    craw = Crawler_google_images()
-    craw.run()
+
+    if len(sys.argv) == 2:
+        craw = Crawler_google_images()
+        craw.run(sys.argv[1])
+    else:
+        print("{error: 1, msg: python image.py 'baidu image url'}")
 
     # print(url)
 
