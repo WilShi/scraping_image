@@ -94,6 +94,7 @@ class Crawler_google_images:
         self.zipf(dir)
         print('#'*50)
         print("爬取和打包文件完成！！！！")
+        print("文件路径为：{}".format(dir))
         print('#'*50)
 
     def zipf(self, dir):
