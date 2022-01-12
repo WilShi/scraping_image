@@ -97,10 +97,22 @@ class Crawler_google_images:
         print("文件路径为：{}".format(dir))
         print('#'*50)
 
+
+    # 压缩文件夹
     def zipf(self, dir):
         zip = zipfile.ZipFile('./{}.zip'.format(dir), 'w', zipfile.ZIP_DEFLATED)
         zip.write('./{}'.format(dir))
         zip.close()
+
+
+    def countfile(self, path):
+        path.replace('\\', '/')
+        count = 0
+        if os.path.isdir(path):
+            files = os.listdir(path)
+            for file in files:
+                count+=1
+        return count
 
 
 if __name__ == '__main__':
@@ -112,6 +124,9 @@ if __name__ == '__main__':
             craw.run(sys.argv[1], sys.argv[2], sys.argv[3])
         elif sys.argv[1] == "zip":
             craw.zipf(sys.argv[2])
+        elif sys.argv[1] == "count":
+            count = craw.countfile(sys.argv[2])
+            print("文件夹内有：{} 个文件".format(str(count)))
         else:
             print("{error: 1, msg: python image.py ['baidu image url', zip] [page, dirName] [dirName, '']}")
     else:
