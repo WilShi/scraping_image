@@ -1,3 +1,4 @@
+# coding: utf-8
 # author: Wenbo Shi
 #aim:爬取google图片
 
@@ -101,7 +102,11 @@ class Crawler_google_images:
     # 压缩文件夹
     def zipf(self, dir):
         zip = zipfile.ZipFile('./{}.zip'.format(dir), 'w', zipfile.ZIP_DEFLATED)
-        zip.write('./{}'.format(dir))
+        for path, dirnames, filenames in os.walk('./{}'.format(dir)):
+            fpath = path.replace('./{}'.format(dir), '')
+            for filename in filenames:
+                zip.write(os.path.join(path, filename), os.path.join(fpath, filename))
+        # zip.write('./{}'.format(dir))
         zip.close()
 
 
