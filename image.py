@@ -4,6 +4,7 @@
 
 from selenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.common.by import By
 import time
 import os
 import requests
@@ -41,7 +42,7 @@ class Crawler_google_images:
         return browser
 
     #下载图片
-    def download_images(self, browser, url, round=2, dir='image'):
+    def download_images(self, browser, url, round=2, picpath='image'):
 
         proxy = '127.0.0.1:41091'
         proxies = {
@@ -49,7 +50,7 @@ class Crawler_google_images:
             'https': 'https://' + proxy
         }
 
-        picpath = './finish/{}'.format(dir)
+        # picpath = './finish/{}'.format(picpath)
         # 路径不存在时创建一个
         if not os.path.exists(picpath): os.makedirs(picpath)
         # 记录下载过的图片地址，避免重复下载
@@ -63,6 +64,15 @@ class Crawler_google_images:
             # 向下滑动
             js = 'var q=document.documentElement.scrollTop=' + str(pos)
             browser.execute_script(js)
+            
+            try:
+                show_more_button = browser.find_element(By.CSS_SELECTOR, "input[value='顯示更多結果']")
+                if show_more_button.is_displayed():
+                    show_more_button.click()
+                    print("自动点击'加载更多'按钮......")
+            except Exception as error:
+                pass
+
             time.sleep(1)
             # 找到图片
             # html = browser.page_source#也可以抓取当前页面的html文本，然后用beautifulsoup来抓取
@@ -83,7 +93,7 @@ class Crawler_google_images:
                                 try:
                                     img_url_dic.append(img_url)
                                     #下载并保存图片到当前目录下
-                                    filename = "./finish/{}/".format(dir) + str(count) + ".jpg"
+                                    filename = "{}/{}.jpg".format(picpath, str(count))
                                     if 'google' in url:
                                         r = requests.get(img_url, proxies=proxies)
                                     else:
@@ -103,7 +113,7 @@ class Crawler_google_images:
 
                         if img_url not in img_url_dic:
                             img_url_dic.append(img_url)
-                            filename = "./finish/{}/".format(dir) + str(count) + ".jpg"
+                            filename = "{}/{}.jpg".format(picpath, str(count))
                             r = base64.b64decode(img_url)
                             with open(filename, 'wb') as f:
                                 f.write(r)
@@ -115,6 +125,7 @@ class Crawler_google_images:
 
 
     def run(self, url, page=20, dir='image'):
+        dir = './finish/{}'.format(dir)
         self.__init__()
         browser = self.init_browser(url)
         self.download_images(browser, url, int(page), dir)#可以修改爬取的页面数，基本10页是100多张图片
@@ -152,17 +163,25 @@ if __name__ == '__main__':
     craw = Crawler_google_images()
 
     if len(sys.argv) > 2:
-        if len(sys.argv) == 4:
-            craw.run(sys.argv[1], sys.argv[2], sys.argv[3])
+        if sys.argv[1] == "link" or sys.argv[1] == "url":
+            craw.run(sys.argv[2], sys.argv[3], sys.argv[4])
         elif sys.argv[1] == "zip":
             craw.zipf(sys.argv[2])
         elif sys.argv[1] == "count":
             count = craw.countfile(sys.argv[2])
             print("文件夹内有：{} 个文件".format(str(count)))
+        elif sys.argv[1] == "google":
+            url = 'https://www.google.com.hk/search?q={}&tbm=isch'.format(sys.argv[2])
+            print(url)
+            craw.run(url, sys.argv[3], sys.argv[2])
+        elif sys.argv[1] == "baidu":
+            url = 'https://image.baidu.com/search/index?tn=baiduimage&word={}'.format(sys.argv[2])
+            print(url)
+            craw.run(url, sys.argv[3], sys.argv[2])
         else:
-            print("{error: 1, msg: python image.py ['baidu image url', zip] [page, dirName] [dirName, '']}")
+            print("{error: 1, msg: python image.py [link|url, zip, count, google, baidu] [pages, dirName, dirName, keyword, keyword] [dirName, '', '', pages, pages]}")
     else:
-        print("{error: 1, msg: python image.py ['baidu image url', zip] [page, dirName] [dirName, '']}")
+        print("{error: 1, msg: python image.py [link|url, zip, count, google, baidu] [pages, dirName, dirName, keyword, keyword] [dirName, '', '', pages, pages]}")
 
     # print(url)
 
