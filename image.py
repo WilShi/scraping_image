@@ -9,6 +9,7 @@ import os
 import requests
 import sys
 import zipfile
+import base64, re
 
 # 使用代理的方法 ，可以直接windows使用代理，不用这么麻烦
 # browserOptions = webdriver.ChromeOptions()
@@ -40,8 +41,15 @@ class Crawler_google_images:
         return browser
 
     #下载图片
-    def download_images(self, browser, round=2, dir='image'):
-        picpath = './{}'.format(dir)
+    def download_images(self, browser, url, round=2, dir='image'):
+
+        proxy = '127.0.0.1:41091'
+        proxies = {
+            'http': 'http://' + proxy,
+            'https': 'https://' + proxy
+        }
+
+        picpath = './finish/{}'.format(dir)
         # 路径不存在时创建一个
         if not os.path.exists(picpath): os.makedirs(picpath)
         # 记录下载过的图片地址，避免重复下载
@@ -68,29 +76,48 @@ class Crawler_google_images:
                 if isinstance(img_url, str):
                     if len(img_url) <= 200:
                         #将干扰的google图标筛去
-                        if 'img' in img_url:
+                        if 'img' in img_url or 'image' in img_url:
                             #判断是否已经爬过，因为每次爬取当前窗口，或许会重复
                             #实际上这里可以修改一下，将列表只存储上一次的url，这样可以节省开销，不过我懒得写了···
                             if img_url not in img_url_dic:
                                 try:
                                     img_url_dic.append(img_url)
                                     #下载并保存图片到当前目录下
-                                    filename = "./{}/".format(dir) + str(count) + ".jpg"
-                                    r = requests.get(img_url)
+                                    filename = "./finish/{}/".format(dir) + str(count) + ".jpg"
+                                    if 'google' in url:
+                                        r = requests.get(img_url, proxies=proxies)
+                                    else:
+                                        r = requests.get(img_url)
                                     with open(filename, 'wb') as f:
                                         f.write(r.content)
                                     f.close()
                                     count += 1
-                                    print('this is '+str(count)+'st img')
+                                    print('this is {} st img this image is from a url'.format(str(count)))
                                     #防止反爬机制
                                     time.sleep(0.2)
                                 except:
                                     print('failure')
 
+                    else:
+                        img_url = img_url[img_url.find(',')+1:]
+
+                        if img_url not in img_url_dic:
+                            img_url_dic.append(img_url)
+                            filename = "./finish/{}/".format(dir) + str(count) + ".jpg"
+                            r = base64.b64decode(img_url)
+                            with open(filename, 'wb') as f:
+                                f.write(r)
+                            f.close()
+                            count += 1
+                            print('this is {} st img this image is from base64 encode'.format(str(count)))
+                            # 防止反爬机制
+                            time.sleep(0.2)
+
+
     def run(self, url, page=20, dir='image'):
         self.__init__()
         browser = self.init_browser(url)
-        self.download_images(browser, int(page), dir)#可以修改爬取的页面数，基本10页是100多张图片
+        self.download_images(browser, url, int(page), dir)#可以修改爬取的页面数，基本10页是100多张图片
         browser.close()
         self.zipf(dir)
         print('#'*50)
