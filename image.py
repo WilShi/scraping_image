@@ -154,7 +154,11 @@ class Crawler_google_images:
         if os.path.isdir(path):
             files = os.listdir(path)
             for file in files:
-                count+=1
+                new_file = path + '/' + file
+                if os.path.isdir(new_file):
+                    count += self.countfile(new_file)
+                else:
+                    count+=1
         return count
 
 
