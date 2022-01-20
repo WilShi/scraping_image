@@ -26,8 +26,12 @@ import base64, re
 
 class Crawler_google_images:
     # 初始化
-    # def __init__(self):
-    #     self.url = url
+    def __init__(self):
+        self.proxy = '127.0.0.1:41091'
+        self.proxies = {
+            'http': 'http://' + self.proxy,
+            'https': 'https://' + self.proxy
+        }
 
     # 获得Chrome驱动，并访问url
     def init_browser(self, url):
@@ -44,12 +48,6 @@ class Crawler_google_images:
     #下载图片
     def download_images(self, browser, url, round=2, picpath='image'):
 
-        proxy = '127.0.0.1:41091'
-        proxies = {
-            'http': 'http://' + proxy,
-            'https': 'https://' + proxy
-        }
-
         # picpath = './finish/{}'.format(picpath)
         # 路径不存在时创建一个
         if not os.path.exists(picpath): os.makedirs(picpath)
@@ -59,7 +57,7 @@ class Crawler_google_images:
         count = 1 #图片序号
         pos = 0
         for i in range(round):
-            print("目前正在下载第 {} 页的图片......".format(str(i+1)))
+            print("目前正在获取第 {} 页的图片......".format(str(i+1)))
             pos += 500
             # 向下滑动
             js = 'var q=document.documentElement.scrollTop=' + str(pos)
@@ -70,75 +68,111 @@ class Crawler_google_images:
                 if show_more_button.is_displayed():
                     show_more_button.click()
                     print("自动点击'加载更多'按钮......")
+                    time.sleep(2)
             except Exception as error:
+                try:
+                    show_more_button = browser.find_element(By.CSS_SELECTOR, "input[value='显示更多搜索结果']")
+                    if show_more_button.is_displayed():
+                        show_more_button.click()
+                        print("自动点击'加载更多'按钮......")
+                        time.sleep(2)
+                except Exception as error:
+                    pass
+
                 pass
 
-            time.sleep(1)
-            # 找到图片
-            # html = browser.page_source#也可以抓取当前页面的html文本，然后用beautifulsoup来抓取
-            #直接通过tag_name来抓取是最简单的，比较方便
+            time.sleep(0.5)
+        # 找到图片
+        # html = browser.page_source#也可以抓取当前页面的html文本，然后用beautifulsoup来抓取
+        #直接通过tag_name来抓取是最简单的，比较方便
 
-            img_elements = browser.find_elements_by_tag_name('img')
-            #遍历抓到的webElement
-            for img_element in img_elements:
-                img_url = img_element.get_attribute('src')
-                # 前几个图片的url太长，不是图片的url，先过滤掉，爬后面的
-                if isinstance(img_url, str):
-                    if len(img_url) <= 200:
-                        #将干扰的google图标筛去
-                        if 'img' in img_url or 'image' in img_url:
-                            #判断是否已经爬过，因为每次爬取当前窗口，或许会重复
-                            #实际上这里可以修改一下，将列表只存储上一次的url，这样可以节省开销，不过我懒得写了···
-                            if img_url not in img_url_dic:
-                                try:
-                                    img_url_dic.append(img_url)
-                                    #下载并保存图片到当前目录下
-                                    filename = "{}/{}.jpg".format(picpath, str(count))
-                                    if 'google' in url:
-                                        r = requests.get(img_url, proxies=proxies)
-                                    else:
-                                        r = requests.get(img_url)
-                                    with open(filename, 'wb') as f:
-                                        f.write(r.content)
-                                    f.close()
-                                    count += 1
-                                    print('this is {} st img this image is from a url'.format(str(count)))
-                                    #防止反爬机制
-                                    time.sleep(0.2)
-                                except:
-                                    print('failure')
-
-                    else:
-                        img_url = img_url[img_url.find(',')+1:]
-
+        img_elements = browser.find_elements_by_tag_name('img')
+        #遍历抓到的webElement
+        for img_element in img_elements:
+            img_url = img_element.get_attribute('src')
+            # 前几个图片的url太长，不是图片的url，先过滤掉，爬后面的
+            if isinstance(img_url, str):
+                if len(img_url) <= 200:
+                    #将干扰的google图标筛去
+                    if 'img' in img_url or 'image' in img_url:
+                        #判断是否已经爬过，因为每次爬取当前窗口，或许会重复
+                        #实际上这里可以修改一下，将列表只存储上一次的url，这样可以节省开销，不过我懒得写了···
                         if img_url not in img_url_dic:
                             img_url_dic.append(img_url)
-                            filename = "{}/{}.jpg".format(picpath, str(count))
-                            r = base64.b64decode(img_url)
-                            with open(filename, 'wb') as f:
-                                f.write(r)
-                            f.close()
-                            count += 1
-                            print('this is {} st img this image is from base64 encode'.format(str(count)))
-                            # 防止反爬机制
-                            time.sleep(0.2)
+
+                else:
+                    img_url = img_url[img_url.find(',')+1:]
+
+                    if img_url not in img_url_dic:
+                        img_url_dic.append(img_url)
+
+        print("获取到了 {} 张图片".format(str(len(img_url_dic))))
+        return img_url_dic
+
+                        
+    def download_url(self, url, img_url, picpath, count):
+        if len(img_url) <= 200:
+            try:
+                filename = "{}/{}.jpg".format(picpath, str(count))
+                if 'google' in url:
+                    r = requests.get(img_url, proxies=self.proxies)
+                else:
+                    r = requests.get(img_url)
+                with open(filename, 'wb') as f:
+                    f.write(r.content)
+                f.close()
+                print('this is {} st img this image is from a url'.format(str(count)))
+                # time.sleep(0.2)
+                return True
+            except:
+                print('failure')
+                return False
+        else:
+            filename = "{}/{}.jpg".format(picpath, str(count))
+            r = base64.b64decode(img_url)
+            with open(filename, 'wb') as f:
+                f.write(r)
+            f.close()
+            count += 1
+            print('this is {} st img this image is from base64 encode'.format(str(count)))
+            # time.sleep(0.2)
+            return True
 
 
     def run(self, url, page=20, dir='image'):
         dir = './finish/{}'.format(dir)
         self.__init__()
         browser = self.init_browser(url)
-        self.download_images(browser, url, int(page), dir)#可以修改爬取的页面数，基本10页是100多张图片
+        url_list = self.download_images(browser, url, int(page), dir)#可以修改爬取的页面数，基本10页是100多张图片
         browser.close()
+
+        count = 1
+        for image_url in url_list:
+            if self.download_url(url, image_url, dir, count):
+                count += 1
+
         self.zipf(dir)
         print('#'*50)
         print("爬取和打包文件完成！！！！")
         print("文件路径为：{}".format(dir))
         print('#'*50)
+        return self.format_path(dir)
+
+
+    def format_path(self, path) -> str:
+        path = os.path.abspath(path)
+        path = path.replace('\\', '/')
+        path = path.replace('//', '/')
+        path = path[:-1] if path[-1] == '/' else path
+        return path
 
 
     # 压缩文件夹
     def zipf(self, dir):
+        dir = dir.replace('\\', '/')
+        dir = dir[:-1] if dir[-1] == '/' else dir
+        # dir = dir[dir.rfind('/')+1:] if '/' in dir else dir
+        # print(dir)
         zip = zipfile.ZipFile('./{}.zip'.format(dir), 'w', zipfile.ZIP_DEFLATED)
         for path, dirnames, filenames in os.walk('./{}'.format(dir)):
             fpath = path.replace('./{}'.format(dir), '')
@@ -149,7 +183,7 @@ class Crawler_google_images:
 
 
     def countfile(self, path):
-        path.replace('\\', '/')
+        path = path.replace('\\', '/')
         count = 0
         if os.path.isdir(path):
             files = os.listdir(path)
@@ -187,5 +221,4 @@ if __name__ == '__main__':
     else:
         print("{error: 1, msg: python image.py [link|url, zip, count, google, baidu] [pages, dirName, dirName, keyword, keyword] [dirName, '', '', pages, pages]}")
 
-    # print(url)
 
