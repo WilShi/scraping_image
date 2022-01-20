@@ -37,9 +37,12 @@ class MyMainForm(QMainWindow, Ui_Form):
     def baidu(self):
         url = self.search_lineEdit.text()
         page = self.page_lineEdit.text()
+        self.textBrowser.setText("开始从百度图片寻找 {} 图片".format(url))
         wurl = 'https://image.baidu.com/search/index?tn=baiduimage&word={}'.format(url)
         print(url)
-        self.craw.run(wurl, page, url)
+        path = self.craw.run(wurl, page, url)
+        self.textBrowser.setText("图片爬取结束！！！！\n文件保存在{}".format(path))
+
 
     def zip_(self):
         url = self.search_lineEdit.text()
@@ -50,7 +53,7 @@ class MyMainForm(QMainWindow, Ui_Form):
         url = self.search_lineEdit.text()
         count = self.craw.countfile(url)
         print("文件夹内有：{} 个文件".format(str(count)))
-
+        self.textBrowser.setText("{} 文件夹拥有 {} 个文件".format(url, count))
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

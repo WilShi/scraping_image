@@ -111,9 +111,12 @@ class Crawler_google_images:
 
                         
     def download_url(self, url, img_url, picpath, count):
+
+        filename = "{}/{}.jpg".format(picpath, str(count))
+        filename = self.format_path(filename)
+
         if len(img_url) <= 200:
             try:
-                filename = "{}/{}.jpg".format(picpath, str(count))
                 if 'google' in url:
                     r = requests.get(img_url, proxies=self.proxies)
                 else:
@@ -128,7 +131,6 @@ class Crawler_google_images:
                 print('failure')
                 return False
         else:
-            filename = "{}/{}.jpg".format(picpath, str(count))
             r = base64.b64decode(img_url)
             with open(filename, 'wb') as f:
                 f.write(r)
@@ -140,7 +142,7 @@ class Crawler_google_images:
 
 
     def run(self, url, page=20, dir='image'):
-        dir = './finish/{}'.format(dir)
+        dir = '/Users/wenboshi/Desktop/finish/{}'.format(dir)
         self.__init__()
         browser = self.init_browser(url)
         url_list = self.download_images(browser, url, int(page), dir)#可以修改爬取的页面数，基本10页是100多张图片
@@ -173,9 +175,9 @@ class Crawler_google_images:
         dir = dir[:-1] if dir[-1] == '/' else dir
         # dir = dir[dir.rfind('/')+1:] if '/' in dir else dir
         # print(dir)
-        zip = zipfile.ZipFile('./{}.zip'.format(dir), 'w', zipfile.ZIP_DEFLATED)
-        for path, dirnames, filenames in os.walk('./{}'.format(dir)):
-            fpath = path.replace('./{}'.format(dir), '')
+        zip = zipfile.ZipFile('{}.zip'.format(dir), 'w', zipfile.ZIP_DEFLATED)
+        for path, dirnames, filenames in os.walk('{}'.format(dir)):
+            fpath = path.replace('{}'.format(dir), '')
             for filename in filenames:
                 zip.write(os.path.join(path, filename), os.path.join(fpath, filename))
         # zip.write('./{}'.format(dir))
