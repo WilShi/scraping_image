@@ -55,7 +55,7 @@ class Crawler_google_images:
         # 记录下载过的图片地址，避免重复下载
         img_url_dic = []
 
-        count = 1 #图片序号
+        
         pos = 0
         for i in range(round):
             print("目前正在获取第 {} 页的图片......".format(str(i+1)))
@@ -81,7 +81,6 @@ class Crawler_google_images:
                     pass
 
                 pass
-
             time.sleep(0.5)
         # 找到图片
         # html = browser.page_source#也可以抓取当前页面的html文本，然后用beautifulsoup来抓取
