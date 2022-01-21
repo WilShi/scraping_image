@@ -18,11 +18,11 @@ class MyMainForm(QMainWindow, Ui_Form):
 
 
     def link(self):
-        self.textBrowser.setText("开始从链接：{}\n获取图片".format(url))
+        
         url = self.search_lineEdit.text()
         page = self.page_lineEdit.text()
         filename = self.filename_lineEdit.text() if self.filename_lineEdit.text() else 'image'
-        
+        self.textBrowser.setText("开始从链接：{}\n获取图片".format(url))
         path = self.craw.run(url, page, filename)
         self.textBrowser.setText("图片爬取结束！！！！\n文件保存在{}".format(path))
 
