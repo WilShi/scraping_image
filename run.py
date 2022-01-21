@@ -68,12 +68,13 @@ class MyMainForm(QMainWindow, Ui_Form):
 
     def run(self, url, page=20, dir='image'):
         dir = '{}/Downloads/finish/{}'.format(str(Path.home()), dir)
-        # Crawler_google_images.__init__()
+
+        self.textBrowser.setText("请等待......\n\n正在初始化可监控浏览器窗口......\n\n".format(url))
+        QApplication.processEvents()
         browser = self.craw.init_browser(url)
 
         self.textBrowser.setText("请等待......\n\n正在通过：\n\n {} \n\n链接寻找图片......\n\n".format(url))
         QApplication.processEvents()
-
         url_list = self.craw.download_images(browser, url, int(page), dir)#可以修改爬取的页面数，基本10页是100多张图片
         browser.close()
 
@@ -84,10 +85,11 @@ class MyMainForm(QMainWindow, Ui_Form):
         count = 1
         for image_url in url_list:
             msg = self.craw.download_url(url, image_url, dir, count)
-            if msg:
-                self.textBrowser.setText("获取到了 {} 张图片\n\n\n{}\n\n\n下载进度：{}/{} （{}%）".format(str(listlen), msg, str(count), str(listlen), str(round(count/listlen*100, 2))))
-                QApplication.processEvents()
-                count += 1
+
+            self.textBrowser.setText("获取到了 {} 张图片\n\n\n{}\n\n\n下载进度：{}/{} （{}%）\n\n\n{}"\
+                .format(str(listlen), msg, str(count), str(listlen), str(round(count/listlen*100, 2)), self.process_bar(int(count/listlen*100), 100)))
+            QApplication.processEvents()
+            count += 1
 
 
         print('#'*50)
@@ -99,6 +101,13 @@ class MyMainForm(QMainWindow, Ui_Form):
         QApplication.processEvents()
 
         return self.craw.format_path(dir)
+
+
+    def process_bar(self, num, total):
+        rate = float(num)/total
+        barnum = int(20*rate)
+        r = '[{}{}]'.format('*'*barnum,' '*(20-barnum))
+        return r
         
 
 if __name__ == "__main__":
