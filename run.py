@@ -60,6 +60,7 @@ class MyMainForm(QMainWindow, Ui_Form):
         count = self.craw.countfile(url)
         print("文件夹内有：{} 个文件".format(str(count)))
         self.textBrowser.setText("{} 文件夹拥有 {} 个文件".format(url, count))
+        
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

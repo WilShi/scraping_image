@@ -177,6 +177,8 @@ class Crawler_google_images:
         # dir = dir[dir.rfind('/')+1:] if '/' in dir else dir
         # print(dir)
         zippath = '{}.zip'.format(dir)
+        zippath = self.format_path(zippath)
+
         zip = zipfile.ZipFile(zippath, 'w', zipfile.ZIP_DEFLATED)
         for path, dirnames, filenames in os.walk('{}'.format(dir)):
             fpath = path.replace('{}'.format(dir), '')
