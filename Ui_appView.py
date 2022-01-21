@@ -9,6 +9,7 @@
 
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+import qdarkstyle
 
 
 class Ui_Form(object):
@@ -22,7 +23,7 @@ class Ui_Form(object):
         self.search_lineEdit.setGeometry(QtCore.QRect(180, 50, 150, 21))
         self.search_lineEdit.setObjectName("search_lineEdit")
         self.page_label = QtWidgets.QLabel(Form)
-        self.page_label.setGeometry(QtCore.QRect(60, 90, 72, 15))
+        self.page_label.setGeometry(QtCore.QRect(60, 90, 72, 16))
         self.page_label.setObjectName("page_label")
         self.page_lineEdit = QtWidgets.QLineEdit(Form)
         self.page_lineEdit.setGeometry(QtCore.QRect(180, 90, 150, 21))
@@ -66,3 +67,7 @@ class Ui_Form(object):
         self.baidu_pushButton.setText(_translate("Form", "百度"))
         self.zip_pushButton.setText(_translate("Form", "压缩"))
         self.count_pushButton.setText(_translate("Form", "文件总合"))
+
+        self.setWindowOpacity(0.9) # 设置窗口透明度
+        # 美化风格
+        self.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
