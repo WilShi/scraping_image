@@ -25,10 +25,8 @@ class MyMainForm(QMainWindow, Ui_Form):
         filename = self.filename_lineEdit.text() if self.filename_lineEdit.text() else 'image'
         self.textBrowser.setText("开始从链接：{}\n\n获取图片".format(url))
         QApplication.processEvents()
-
         path = self.run(url, page, filename)
-
-        self.textBrowser.setText("图片爬取结束！！！！\n\n文件保存在:\n\n{}".format(path))
+        # self.textBrowser.setText("图片爬取结束！！！！\n\n文件保存在:\n\n{}".format(path))
 
 
     def google(self):
@@ -40,7 +38,7 @@ class MyMainForm(QMainWindow, Ui_Form):
         wurl = 'https://www.google.com.hk/search?q={}&tbm=isch'.format(url)
         print(url)
         path = self.run(wurl, page, url)
-        self.textBrowser.setText("图片爬取结束！！！！\n\n文件保存在:\n\n{}".format(path))
+        # self.textBrowser.setText("图片爬取结束！！！！\n\n文件保存在:\n\n{}".format(path))
 
 
     def baidu(self):
@@ -52,7 +50,7 @@ class MyMainForm(QMainWindow, Ui_Form):
         wurl = 'https://image.baidu.com/search/index?tn=baiduimage&word={}'.format(url)
         print(url)
         path = self.run(wurl, page, url)
-        self.textBrowser.setText("图片爬取结束！！！！\n\n文件保存在:\n\n{}".format(path))
+        # self.textBrowser.setText("图片爬取结束！！！！\n\n文件保存在:\n\n{}".format(path))
 
 
     def zip_(self):
@@ -73,20 +71,21 @@ class MyMainForm(QMainWindow, Ui_Form):
         # Crawler_google_images.__init__()
         browser = self.craw.init_browser(url)
 
-        self.textBrowser.setText("请等待......\n\n正在通过 {} 链接寻找图片......\n\n".format(url))
+        self.textBrowser.setText("请等待......\n\n正在通过：\n\n {} \n\n链接寻找图片......\n\n".format(url))
         QApplication.processEvents()
 
         url_list = self.craw.download_images(browser, url, int(page), dir)#可以修改爬取的页面数，基本10页是100多张图片
         browser.close()
 
-        self.textBrowser.setText("获取到了 {} 张图片\n\n开始下载图片......".format(str(len(url_list))))
+        listlen = len(url_list)
+        self.textBrowser.setText("获取到了 {} 张图片\n\n开始下载图片......".format(str(listlen)))
         QApplication.processEvents()
 
         count = 1
         for image_url in url_list:
             msg = self.craw.download_url(url, image_url, dir, count)
             if msg:
-                self.textBrowser.setText("{}\n\n\n下载进度：{}/{} （{}%）".format(msg, str(count), str(len(url_list)), str(round(count/len(url_list)*100, 2))))
+                self.textBrowser.setText("获取到了 {} 张图片\n\n\n{}\n\n\n下载进度：{}/{} （{}%）".format(str(listlen), msg, str(count), str(listlen), str(round(count/listlen*100, 2))))
                 QApplication.processEvents()
                 count += 1
 
@@ -95,6 +94,10 @@ class MyMainForm(QMainWindow, Ui_Form):
         print("爬取和打包文件完成！！！！")
         print("文件路径为：{}".format(self.craw.format_path(dir)))
         print('#'*50)
+
+        self.textBrowser.setText("图片爬取结束！！！！\n\n文件保存在:\n\n{}\n\n本文件没有压缩，如需压缩可以将文件路径复制进‘链接/关键词’的输入框然后点击压缩按钮......".format(self.craw.format_path(dir)))
+        QApplication.processEvents()
+
         return self.craw.format_path(dir)
         
 
