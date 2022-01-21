@@ -127,7 +127,7 @@ class Crawler_google_images:
                 f.close()
                 print('this is {} st img this image is from a url'.format(str(count)))
                 # time.sleep(0.2)
-                return True
+                return "成功通过URL链接下载 {} 图片".format(str(count))
             except:
                 print('failure')
                 return False
@@ -139,7 +139,7 @@ class Crawler_google_images:
             count += 1
             print('this is {} st img this image is from base64 encode'.format(str(count)))
             # time.sleep(0.2)
-            return True
+            return "成功通过base64获取 {} 图片".format(str(count))
 
 
     def run(self, url, page=20, dir='image'):
@@ -151,7 +151,8 @@ class Crawler_google_images:
 
         count = 1
         for image_url in url_list:
-            if self.download_url(url, image_url, dir, count):
+            msg = self.download_url(url, image_url, dir, count)
+            if msg:
                 count += 1
 
         self.zipf(dir)
