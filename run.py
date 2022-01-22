@@ -106,7 +106,7 @@ class MyMainForm(QMainWindow, Ui_Form):
     def process_bar(self, num, total):
         rate = float(num)/total
         barnum = int(20*rate)
-        r = '[{}{}]'.format('*'*barnum,' '*(20-barnum))
+        r = '[{}{}]'.format('*'*barnum,'_'*(20-barnum))
         return r
         
 
