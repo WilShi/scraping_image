@@ -92,7 +92,7 @@ class Crawler_google_images:
             img_url = img_element.get_attribute('src')
             # 前几个图片的url太长，不是图片的url，先过滤掉，爬后面的
             if isinstance(img_url, str):
-                if len(img_url) <= 200:
+                if len(img_url) <= 200 or "http" in img_url:
                     #将干扰的google图标筛去
                     if 'img' in img_url or 'image' in img_url:
                         #判断是否已经爬过，因为每次爬取当前窗口，或许会重复
@@ -115,7 +115,7 @@ class Crawler_google_images:
         filename = "{}/{}.jpg".format(picpath, str(count))
         filename = self.format_path(filename)
 
-        if len(img_url) <= 200:
+        if len(img_url) <= 200 or "http" in img_url:
             try:
                 if 'google' in url:
                     r = requests.get(img_url, proxies=self.proxies)
