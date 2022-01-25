@@ -13,17 +13,6 @@ import sys
 import zipfile
 import base64, re
 
-# 使用代理的方法 ，可以直接windows使用代理，不用这么麻烦
-# browserOptions = webdriver.ChromeOptions()
-# browserOptions.add_argument('--proxy-server=ip:port)
-# browser = webdriver.Chrome(chrome_options=browserOptions)
-
-#修改keyword便可以修改搜索关键词
-# keyword = '戴眼镜的人'
-# url = 'https://www.google.com.hk/search?q='+keyword+'&tbm=isch'
-
-# url = 'https://image.baidu.com/search/index?tn=baiduimage&ipn=r&ct=201326592&cl=2&lm=-1&st=-1&fm=result&fr=&sf=1&fmq=1641819994082_R&pv=&ic=&nc=1&z=&hd=&latest=&copyright=&se=1&showtab=0&fb=0&width=&height=&face=0&istype=2&dyTabStr=MCwzLDIsMSw0LDYsNSw3LDgsOQ%3D%3D&ie=utf-8&sid=&word=%E6%88%B4%E7%9C%BC%E7%94%B7%E4%BA%BA'
-
 
 class Crawler_google_images:
     # 初始化
@@ -39,7 +28,10 @@ class Crawler_google_images:
         # chrome_options = webdriver.ChromeOptions()
         # chrome_options.add_argument("--disable-infobars")
         # browser = webdriver.Chrome(chrome_options=chrome_options)
-        browser = webdriver.Chrome(ChromeDriverManager().install())
+        option=webdriver.ChromeOptions()
+        option.add_argument('headless')
+
+        browser = webdriver.Chrome(ChromeDriverManager().install(), chrome_options=option)
         # 访问url
         browser.get(url)
         # 最大化窗口，之后需要爬取窗口中所见的所有图片
