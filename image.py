@@ -2,6 +2,7 @@
 # author: Wenbo Shi
 #aim:爬取google图片
 
+import random
 from selenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
@@ -12,6 +13,7 @@ import requests
 import sys
 import zipfile
 import base64, re
+from concurrent.futures import ThreadPoolExecutor
 
 
 class Crawler_google_images:
@@ -38,7 +40,7 @@ class Crawler_google_images:
         browser.maximize_window()
         return browser
 
-    #下载图片
+
     def download_images(self, browser, url, round=2, picpath='image'):
 
         # picpath = './finish/{}'.format(picpath)
@@ -116,9 +118,9 @@ class Crawler_google_images:
                 with open(filename, 'wb') as f:
                     f.write(r.content)
                 f.close()
-                print('this is {} st img this image is from a url'.format(str(count)))
+                print('this is {}.jpg st img this image is from a url'.format(str(count)))
                 # time.sleep(0.2)
-                return "成功通过URL链接下载 {} 图片".format(str(count))
+                return "成功通过URL链接下载 {}.jpg 图片".format(str(count))
             except:
                 print('failure')
                 return False
@@ -127,10 +129,10 @@ class Crawler_google_images:
             with open(filename, 'wb') as f:
                 f.write(r)
             f.close()
-            count += 1
-            print('this is {} st img this image is from base64 encode'.format(str(count)))
+            # count += 1
+            print('this is {}.jpg st img this image is from base64 encode'.format(str(count)))
             # time.sleep(0.2)
-            return "成功通过base64获取 {} 图片".format(str(count))
+            return "成功通过base64获取 {}.jpg 图片".format(str(count))
 
 
     def run(self, url, page=20, dir='image'):
@@ -140,11 +142,11 @@ class Crawler_google_images:
         url_list = self.download_images(browser, url, int(page), dir)#可以修改爬取的页面数，基本10页是100多张图片
         browser.close()
 
-        count = 1
+        pool = ThreadPoolExecutor(max_workers=10)
+
         for image_url in url_list:
-            msg = self.download_url(url, image_url, dir, count)
-            if msg:
-                count += 1
+            pool.submit(self.download_url, url, image_url, dir, random.randint(1, 10000000000))
+        pool.shutdown()
 
         self.zipf(dir)
         print('#'*50)

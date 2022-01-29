@@ -1,8 +1,10 @@
+import random
 import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow
 from Ui_appView import Ui_Form
 from image import Crawler_google_images
 from pathlib import Path
+from concurrent.futures import ThreadPoolExecutor
 
 class MyMainForm(QMainWindow, Ui_Form):
 
@@ -79,17 +81,22 @@ class MyMainForm(QMainWindow, Ui_Form):
         browser.close()
 
         listlen = len(url_list)
-        self.textBrowser.setText("获取到了 {} 张图片\n\n开始下载图片......".format(str(listlen)))
+        self.textBrowser.setText("获取到了 {} 张图片\n\n开始下载图片......\n\n\n由于是多线程下载所以无法显示进度！！！！".format(str(listlen)))
         QApplication.processEvents()
 
+        pool = ThreadPoolExecutor(max_workers=10)
         count = 1
         for image_url in url_list:
-            msg = self.craw.download_url(url, image_url, dir, count)
+            # msg = self.craw.download_url(url, image_url, dir, count)
 
-            self.textBrowser.setText("获取到了 {} 张图片\n\n\n{}\n\n\n下载进度：{}/{} （{}%）\n\n\n{}"\
-                .format(str(listlen), msg, str(count), str(listlen), str(round(count/listlen*100, 2)), self.process_bar(int(count/listlen*100), 100)))
-            QApplication.processEvents()
-            count += 1
+            pool.submit(self.craw.download_url, url, image_url, dir, random.randint(1, 10000000000))
+
+            # self.textBrowser.setText("获取到了 {} 张图片\n\n\n{}\n\n\n下载进度：{}/{} （{}%）\n\n\n{}"\
+            #     .format(str(listlen), msg, str(count), str(listlen), str(round(count/listlen*100, 2)), self.process_bar(int(count/listlen*100), 100)))
+            # QApplication.processEvents()
+            # count += 1
+
+        pool.shutdown()
 
 
         print('#'*50)

@@ -16,6 +16,8 @@ from concurrent.futures import ThreadPoolExecutor
 sys.path.append(r'C:/Users/cn-wilsonshi/Desktop/work/translation/transAPP')
 from readfile import readfile
 
+# face_recognition 文档：https://github.com/ageitgey/face_recognition/blob/master/README_Simplified_Chinese.md
+
 def find_face_cv2(img_path):
 
     # 读取原始图像
@@ -62,31 +64,32 @@ def find_face_fr(img_path, pass_dir, fail_dir):
 
     if face_num2:
         print(f"{img_path} {'='*10} pass")
+        return True
         
         if not os.path.exists(pass_dir): os.makedirs(pass_dir)
         Image.open(img_path).convert('RGB').save(f"{pass_dir}{random.randint(1, 10000000000)}.jpg")
 
-    #     org=cv2.imread(img_path)
-    #     for i in range(0,face_num2):
-    #         top=face_locations[i][0]
-    #         right=face_locations[i][1]
-    #         bottom=face_locations[i][2]
-    #         left=face_locations[i][3]
+        # org=cv2.imread(img_path)
+        # for i in range(0,face_num2):
+        #     top=face_locations[i][0]
+        #     right=face_locations[i][1]
+        #     bottom=face_locations[i][2]
+        #     left=face_locations[i][3]
             
-    #         start=(left,top)
-    #         end=(right,bottom)
+        #     start=(left,top)
+        #     end=(right,bottom)
             
-    #         color=(0,255,0)
-    #         thickness=5
-    #         img=cv2.rectangle(org,start,end,color,thickness)
+        #     color=(0,255,0)
+        #     thickness=5
+        #     img=cv2.rectangle(org,start,end,color,thickness)
             
-    #     plt.imshow(img)
-    #     plt.axis("off")
-    #     plt.show()
+        # plt.imshow(img)
+        # plt.axis("off")
+        # plt.show()
 
     if face_num2 == 0:
         print(f"{img_path} {'='*10} fail")
-
+        return False
         
         if not os.path.exists(fail_dir): os.makedirs(fail_dir)
         Image.open(img_path).convert('RGB').save(f"{fail_dir}{random.randint(1, 10000000000)}.jpg")
@@ -101,7 +104,7 @@ def face_detail(path):
     gray=cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
     detector=dlib.get_frontal_face_detector()
-    predictor=dlib.shape_predictor(r"C:\ProgramData\Anaconda3\Lib\site-packages\face_recognition_models\models\shape_predictor_68_face_landmarks.dat")
+    predictor=dlib.shape_predictor(r"shape_predictor_68_face_landmarks.dat")
     #predictor=dlib.shape_predictor(r"C:\ProgramData\Anaconda3\Lib\site-packages\face_recognition_models\models\shape_predictor_5_face_landmarks.dat")
 
     dets=detector(gray, 1)
@@ -127,16 +130,61 @@ def start(path):
 
     start = datetime.datetime.now()
 
+    tmp_pass = []
+    tmp_fail = []
     for i in paths:
         # print(i)
         if ".jpg" in i:
-            find_face_fr(i, pass_dir, fail_dir)
+            if find_face_fr(i, pass_dir, fail_dir):
+                tmp_pass.append(i)
+            else:
+                tmp_fail.append(i)
+
+    tmp_pass2 = []
+    for i in tmp_pass:
+        # print(i)
+        if ".jpg" in i:
+            if find_face_fr(i, pass_dir, fail_dir):
+                tmp_pass2.append(i)
+            else:
+                tmp_fail.append(i)
+
+    tmp_pass3 = []
+    for i in tmp_pass2:
+        # print(i)
+        if ".jpg" in i:
+            if find_face_fr(i, pass_dir, fail_dir):
+                tmp_pass3.append(i)
+            else:
+                tmp_fail.append(i)
+
+    tmp_pass4 = []
+    for i in tmp_pass3:
+        # print(i)
+        if ".jpg" in i:
+            if find_face_fr(i, pass_dir, fail_dir):
+                tmp_pass4.append(i)
+            else:
+                tmp_fail.append(i)
+
+    
+    for i in tmp_pass4:
+        if not os.path.exists(pass_dir): os.makedirs(pass_dir)
+        Image.open(i).convert('RGB').save(f"{pass_dir}{random.randint(1, 10000000000)}.jpg")
+
+
+    for i in tmp_fail:
+        if not os.path.exists(fail_dir): os.makedirs(fail_dir)
+        Image.open(i).convert('RGB').save(f"{fail_dir}{random.randint(1, 10000000000)}.jpg")
+
 
     end = datetime.datetime.now()
-    print(f"总图片：{len(paths)} 张 {'*'*10} 用时：{(end - start).seconds} 秒")
+    print(f"总图片：{len(paths)} 张 {'*'*10} 用时：{(end - start).seconds} 秒 \
+        \n通过了 {len(tmp_pass4)} 张图片 {'*'*10} 否定了 {len(tmp_fail)} 张图片 \
+        \n通过率 {round(len(tmp_pass4)/len(paths)*100, 2)}%")
 
 
 if __name__ == "__main__":
 
-    # start(sys.argv[1])
-    face_detail(r"C:/Users/cn-wilsonshi/Downloads/old_version/glasses/11.jpg")
+    start(sys.argv[1])
+    # face_detail(r"C:/Users/cn-wilsonshi/Downloads/old_version/glasses/20.jpg")
