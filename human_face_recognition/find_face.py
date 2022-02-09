@@ -170,9 +170,9 @@ def face_detail(path):
 
     # #打印此图像中每个面部特征的位置
     # facial_features = [
-    #     # 'nose_bridge',
-    #     # 'left_eye',
-    #     # 'right_eye',
+    #     'nose_bridge',
+    #     'left_eye',
+    #     'right_eye',
     #     'top_lip',
     #     'bottom_lip'
     # ]
@@ -238,7 +238,6 @@ def face_detail(path):
 
     writeFile(dir, ffpfile)
 
-    # print(filename)
 
 
     # # 在图像中描绘出每个人脸特征！
