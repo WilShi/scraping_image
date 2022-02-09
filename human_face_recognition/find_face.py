@@ -2,12 +2,13 @@
 import datetime
 from itertools import count
 import os
+import re
 import time
 import face_recognition
 import cv2
 import matplotlib.pyplot as plt
 import sys
-from PIL import Image
+from PIL import Image, ImageDraw
 from pathlib import Path
 import random
 import dlib
@@ -51,7 +52,7 @@ class readfile():
         path = path[1:] if path[0] == '/' else path
         return path
 
-        
+
 
 # face_recognition 文档：https://github.com/ageitgey/face_recognition/blob/master/README_Simplified_Chinese.md
 
@@ -136,24 +137,118 @@ def find_face_fr(img_path, pass_dir, fail_dir):
         # cv2.destroyAllWindows()
 
 
+def mkdir(path):
+    path = re.findall("(.*/)", path)[0]
+    print("当前路径：", path)
+    folder = os.path.exists(path)
+    if not folder:
+        os.makedirs(path)
+        print("#"*50)
+        print("建立新的文件路径于: {}".format(path))
+        print("#"*50)
+
+
+def writeFile(path, file):
+    mkdir(path)
+    with open(path, 'w', encoding='UTF-8') as f:
+        f.write(file)
+    f.close
+    print("成功写入文件至: {}".format(path))
+    return path
+
+
 def face_detail(path):
-    img=cv2.imread(path)
-    gray=cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-    detector=dlib.get_frontal_face_detector()
-    predictor=dlib.shape_predictor(r"shape_predictor_68_face_landmarks.dat")
-    #predictor=dlib.shape_predictor(r"C:\ProgramData\Anaconda3\Lib\site-packages\face_recognition_models\models\shape_predictor_5_face_landmarks.dat")
+    image = face_recognition.load_image_file(path)
 
-    dets=detector(gray, 1)
-    for face in dets:
-        shape=predictor(img,face)
-        for pt in shape.parts():
-            pt_pos=(pt.x,pt.y)
-            img=cv2.circle(img,pt_pos,2,(0,255,0),5)
-            
-    plt.imshow(img)
-    plt.axis('off')
-    plt.show()
+    #查找图像中所有面部的所有面部特征
+    face_landmarks_list = face_recognition.face_landmarks(image)
+
+    # print("I found {} face(s) in this photograph.".format(len(face_landmarks_list)))
+
+    face_landmarks = face_landmarks_list[0]
+
+    # #打印此图像中每个面部特征的位置
+    # facial_features = [
+    #     # 'nose_bridge',
+    #     # 'left_eye',
+    #     # 'right_eye',
+    #     'top_lip',
+    #     'bottom_lip'
+    # ]
+
+    # for facial_feature in facial_features:
+    #     print("The {} in this face has the following points: {}".format(facial_feature, face_landmarks[facial_feature]))
+    
+    # 获取面部标记点
+    # print("**"*40)
+
+    allx = 0
+    ally = 0
+    for i in face_landmarks['right_eye']:
+        allx += i[0]
+        ally += i[1]
+
+    lex = round(allx/len(face_landmarks['right_eye']))
+    ley = round(ally/len(face_landmarks['right_eye']))
+
+    # print("left eye:", lex, ley, '\n', "**"*40)
+
+    allx = 0
+    ally = 0
+    for i in face_landmarks['left_eye']:
+        allx += i[0]
+        ally += i[1]
+
+    rex = round(allx/len(face_landmarks['right_eye']))
+    rey = round(ally/len(face_landmarks['right_eye']))
+
+    # print("right eye:", rex, rey, '\n', "**"*40)
+
+    nsx = face_landmarks['nose_bridge'][-1][0]
+    nsy = face_landmarks['nose_bridge'][-1][1]
+
+    # print("nose:", nsx, nsy, '\n', "**"*40)
+
+    maxt = max(face_landmarks['top_lip'])
+    maxb = max(face_landmarks['bottom_lip'])
+    lm = maxt if maxt == maxb else max([maxt, maxb])
+    lmx = lm[0]
+    lmy = lm[1]
+
+    # print("left lip:", lmx, lmy, '\n', "**"*40)
+
+    mint = min(face_landmarks['top_lip'])
+    minb = min(face_landmarks['bottom_lip'])
+    rm = mint if mint == minb else min([mint, minb])
+    rmx = rm[0]
+    rmy = rm[1]
+
+    # print("right lip:", rmx, rmy, '\n', "**"*40)
+
+
+    ffpfile = f"LEX {lex}\nLEY {ley}\nREX {rex}\nREY {rey}\nNSX {nsx}\nNSY {nsy}\nLMX {lmx}\nLMY {lmy}\nRMX {rmx}\nRMY {rmy}"
+
+    # print(ffpfile)
+
+    filename = readfile().last_path(path)
+    filename = filename.replace('jpg', 'ffp')
+
+    dir = '{}/Downloads/FFP/{}'.format(str(Path.home()), filename)
+
+    writeFile(dir, ffpfile)
+
+    # print(filename)
+
+
+    # # 在图像中描绘出每个人脸特征！
+    # pil_image = Image.fromarray(image)
+    # d = ImageDraw.Draw(pil_image)
+
+    # for facial_feature in facial_features:
+    #     d.line(face_landmarks[facial_feature], width=1)
+    # pil_image.show()
+
 
 
 def start(path):
@@ -226,8 +321,13 @@ if __name__ == "__main__":
     if sys.argv[1] == 'face':
         start(sys.argv[2])
 
-    if sys.argv[1] == 'test':
-        pass
+    if sys.argv[1] == 'mark':
+        path = readfile().format_path(sys.argv[2])
+        paths = readfile().listfiles(path)
+        for i in paths:
+            # print(i)
+            face_detail(i)
+
     # face_detail(r"C:/Users/cn-wilsonshi/Downloads/old_version/glasses/20.jpg")
 
     
