@@ -13,8 +13,45 @@ import random
 import dlib
 from concurrent.futures import ThreadPoolExecutor
 
-sys.path.append(r'C:/Users/cn-wilsonshi/Desktop/work/translation/transAPP')
-from readfile import readfile
+class readfile():
+
+    def __init__(self) -> None:
+        self.files = []
+
+    def allfile(self, path) -> None:
+        if os.path.isdir(path):
+            files = os.listdir(path)
+            for file in files:
+                new_file = path+'/'+file
+                if os.path.isdir(new_file):
+                    self.allfile(new_file)
+                else:
+                    self.files.append(new_file)
+        else:
+            self.files.append(path)
+
+    def listfiles(self, path) -> list:
+        path = self.format_path(path)
+        self.allfile(path)
+        return self.files
+
+    def format_path(self, path) -> str:
+        path = os.path.abspath(path)
+        path = path.replace('\\', '/')
+        path = path.replace('//', '/')
+        path = path[:-1] if path[-1] == '/' else path
+        return path
+
+    def last_path(self, path) -> str:
+        path = path[path.rfind('/')+1:]
+        return path
+
+    def sub_path(self, path, rootpath) -> str:
+        path = path[path.find(rootpath)+len(rootpath):]
+        path = path[1:] if path[0] == '/' else path
+        return path
+
+        
 
 # face_recognition 文档：https://github.com/ageitgey/face_recognition/blob/master/README_Simplified_Chinese.md
 
@@ -186,7 +223,11 @@ def start(path):
 
 if __name__ == "__main__":
 
-    start(sys.argv[1])
+    if sys.argv[1] == 'face':
+        start(sys.argv[2])
+
+    if sys.argv[1] == 'test':
+        pass
     # face_detail(r"C:/Users/cn-wilsonshi/Downloads/old_version/glasses/20.jpg")
 
     
