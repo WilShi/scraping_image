@@ -157,31 +157,17 @@ def writeFile(path, file):
     return path
 
 
-def face_detail(path):
+def mark_face_detail(path):
 
-    image = face_recognition.load_image_file(path)
+    try:
+        image = face_recognition.load_image_file(path)
+        #查找图像中所有面部的所有面部特征
+        face_landmarks_list = face_recognition.face_landmarks(image)
+        face_landmarks = face_landmarks_list[0]
+    except Exception as error:
+        print("无法识别到人脸！！！！")
+        return False
 
-    #查找图像中所有面部的所有面部特征
-    face_landmarks_list = face_recognition.face_landmarks(image)
-
-    # print("I found {} face(s) in this photograph.".format(len(face_landmarks_list)))
-
-    face_landmarks = face_landmarks_list[0]
-
-    # #打印此图像中每个面部特征的位置
-    # facial_features = [
-    #     'nose_bridge',
-    #     'left_eye',
-    #     'right_eye',
-    #     'top_lip',
-    #     'bottom_lip'
-    # ]
-
-    # for facial_feature in facial_features:
-    #     print("The {} in this face has the following points: {}".format(facial_feature, face_landmarks[facial_feature]))
-    
-    # 获取面部标记点
-    # print("**"*40)
 
     allx = 0
     ally = 0
@@ -234,19 +220,48 @@ def face_detail(path):
     filename = readfile().last_path(path)
     filename = filename.replace('jpg', 'ffp')
 
-    dir = '{}/Downloads/FFP/{}'.format(str(Path.home()), filename)
+    dir = '{}/Downloads/FFPTEST/{}'.format(str(Path.home()), filename)
 
     writeFile(dir, ffpfile)
 
 
+def show_face_mark(path):
+    image = face_recognition.load_image_file(path)
 
-    # # 在图像中描绘出每个人脸特征！
-    # pil_image = Image.fromarray(image)
-    # d = ImageDraw.Draw(pil_image)
+    #查找图像中所有面部的所有面部特征
+    face_landmarks_list = face_recognition.face_landmarks(image)
 
-    # for facial_feature in facial_features:
-    #     d.line(face_landmarks[facial_feature], width=1)
-    # pil_image.show()
+    # print("I found {} face(s) in this photograph.".format(len(face_landmarks_list)))
+
+    if not face_landmarks_list:
+        print("无法识别到人脸！！！！")
+        return False
+
+    face_landmarks = face_landmarks_list[0]
+
+    #打印此图像中每个面部特征的位置
+    facial_features = [
+        'nose_bridge',
+        'left_eye',
+        'right_eye',
+        'top_lip',
+        'bottom_lip'
+    ]
+
+    for facial_feature in facial_features:
+        print("The {} in this face has the following points: {}".format(facial_feature, face_landmarks[facial_feature]))
+    
+    # 获取面部标记点
+    print("**"*40)
+
+    # 在图像中描绘出每个人脸特征！
+    pil_image = Image.fromarray(image)
+    d = ImageDraw.Draw(pil_image)
+
+    for facial_feature in facial_features:
+        d.line(face_landmarks[facial_feature], width=1)
+    pil_image.show()
+
 
 
 
@@ -323,9 +338,39 @@ if __name__ == "__main__":
     if sys.argv[1] == 'mark':
         path = readfile().format_path(sys.argv[2])
         paths = readfile().listfiles(path)
+
+        start = datetime.datetime.now()
+        notfind = []
         for i in paths:
             # print(i)
-            face_detail(i)
+            if mark_face_detail(i) == False:
+                notfind.append(i)
+
+        print(f"{len(notfind)} 张图片无法找到，需人工检查！！！！")
+        for i in notfind:
+            print(i)
+
+        end = datetime.datetime.now()
+        print(f"总图片：{len(paths)} 张 {'*'*10} 用时：{(end - start).seconds} 秒 {'*'*10} 每秒：{round(len(paths)/int((end - start).seconds))} 张")
+
+
+    if sys.argv[1] == 'show':
+        path = readfile().format_path(sys.argv[2])
+        show_face_mark(path)
+
+    if sys.argv[1] == 'test':
+        pool = ThreadPoolExecutor(max_workers=2)
+
+        path = readfile().format_path(sys.argv[2])
+        paths = readfile().listfiles(path)
+
+        for i in paths:
+            t = pool.submit(mark_face_detail, i)
+            # if not t.running():
+            #     time.sleep(5)
+            # print(i)
+
+        pool.shutdown()
 
     # face_detail(r"C:/Users/cn-wilsonshi/Downloads/old_version/glasses/20.jpg")
 
