@@ -10,9 +10,9 @@ from PIL import Image
 from pathlib import Path
 import random
 from concurrent.futures import ThreadPoolExecutor
+from pytube import YouTube
 
-sys.path.append(r'C:/Users/cn-wilsonshi/Desktop/work/translation/transAPP')
-from readfile import readfile
+from find_face import readfile
 
 # face_recognition 文档：https://github.com/ageitgey/face_recognition/blob/master/README_Simplified_Chinese.md
 
@@ -63,6 +63,9 @@ def find_face(img_path, pass_dir, fail_dir):
 
 # def find_faces(img_path, pass_dir, fail_dir):
 #     print(img_path, "测试》》》》》")
+
+
+
 
 
 if __name__ == "__main__":

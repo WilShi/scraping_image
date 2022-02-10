@@ -220,7 +220,7 @@ def mark_face_detail(path):
     filename = readfile().last_path(path)
     filename = filename.replace('jpg', 'ffp')
 
-    dir = '{}/Downloads/FFPTEST/{}'.format(str(Path.home()), filename)
+    dir = '{}/Downloads/FFP/{}'.format(str(Path.home()), filename)
 
     writeFile(dir, ffpfile)
 
