@@ -59,7 +59,7 @@ class readfile():
 
 # face_recognition 文档：https://github.com/ageitgey/face_recognition/blob/master/README_Simplified_Chinese.md
 
-def find_face_cv2(img_path):
+def find_face_cv2(img_path, pass_dir, fail_dir):
 
     # 读取原始图像
     img = cv2.imread(img_path)
@@ -72,26 +72,39 @@ def find_face_cv2(img_path):
 
     # 检查人脸 按照1.1倍放到 周围最小像素为5
     face_zone = face_detect.detectMultiScale(img, scaleFactor=1.1, minNeighbors=5)
-    print ('识别人脸的信息：',face_zone)
+    # print ('识别人脸的信息：',face_zone)
 
-    if face_zone != ():
+    if type(face_zone) != tuple:
 
-        # 绘制矩形和圆形检测人脸
-        for x, y, w, h in face_zone:
-            # 绘制矩形人脸区域 thickness表示线的粗细
-            cv2.rectangle(img, pt1=(x, y), pt2=(x+w, y+h),color=[0,0,255], thickness=2)
-            # 绘制圆形人脸区域 radius表示半径
-            cv2.circle(img, center=(x+w//2, y+h//2), radius=w//2, color=[0,255,0], thickness=2)
+        print(f"{img_path} {'='*10} pass")
+        return True
+        
+        if not os.path.exists(pass_dir): os.makedirs(pass_dir)
+        Image.open(img_path).convert('RGB').save(f"{pass_dir}{random.randint(1, 10000000000)}.jpg")
 
-        # 设置图片可以手动调节大小
-        cv2.namedWindow("Easmount-CSDN", 0)
+        # # 绘制矩形和圆形检测人脸
+        # for x, y, w, h in face_zone:
+        #     # 绘制矩形人脸区域 thickness表示线的粗细
+        #     cv2.rectangle(img, pt1=(x, y), pt2=(x+w, y+h),color=[0,0,255], thickness=2)
+        #     # 绘制圆形人脸区域 radius表示半径
+        #     cv2.circle(img, center=(x+w//2, y+h//2), radius=w//2, color=[0,255,0], thickness=2)
 
-        # 显示图片
-        cv2.imshow("Easmount-CSDN", img)
+        # # 设置图片可以手动调节大小
+        # cv2.namedWindow("Easmount-CSDN", 0)
 
-        # 等待显示 设置任意键退出程序
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
+        # # 显示图片
+        # cv2.imshow("Easmount-CSDN", img)
+
+        # # 等待显示 设置任意键退出程序
+        # cv2.waitKey(0)
+        # cv2.destroyAllWindows()
+    else:
+
+        print(f"{img_path} {'='*10} fail")
+        return False
+        
+        if not os.path.exists(fail_dir): os.makedirs(fail_dir)
+        Image.open(img_path).convert('RGB').save(f"{fail_dir}{random.randint(1, 10000000000)}.jpg")
 
 
 def find_face_fr(img_path, pass_dir, fail_dir):
@@ -314,6 +327,122 @@ def multprocess(paths):
 
 
 
+def unit_find_face(pathlist, pass_dir, fail_dir, mode):
+    ps = []
+    fl = []
+
+    if mode == 'fr':
+        for path in pathlist:
+            if find_face_fr(path, pass_dir, fail_dir):
+                ps.append(path)
+            else:
+                fl.append(path)
+    if mode == 'cv2':
+        for path in pathlist:
+            if find_face_cv2(path, pass_dir, fail_dir):
+                ps.append(path)
+            else:
+                fl.append(path)
+
+    for i in ps:
+        if not os.path.exists(pass_dir): os.makedirs(pass_dir)
+        Image.open(i).convert('RGB').save(f"{pass_dir}{random.randint(1, 10000000000)}.jpg")
+
+
+    for i in fl:
+        if not os.path.exists(fail_dir): os.makedirs(fail_dir)
+        Image.open(i).convert('RGB').save(f"{fail_dir}{random.randint(1, 10000000000)}.jpg")
+
+
+def multp_find_face(path):
+    start = datetime.datetime.now()
+
+    # use fr to check the face
+
+    path = readfile().format_path(path)
+    paths = readfile().listfiles(path)
+
+    fail_dir = '{}/Downloads/finish_fail/'.format(str(Path.home()))
+    pass_dir_fr = '{}/Downloads/fr_pass/'.format(str(Path.home()))
+
+    length = len(paths)
+
+    p1 = []
+    p2 = []
+    p3 = []
+    p4 = []
+    p5 = []
+
+    for i in range(length):
+        if i < round(length/5):
+            p1.append(paths[i])
+        elif i >= round(length/5) and i <(2*round(length/5)):
+            p2.append(paths[i])
+        elif i >= (2*round(length/5)) and i < (3*round(length/5)):
+            p3.append(paths[i])
+        elif i >= (3*round(length/5)) and i < (4*round(length/5)):
+            p4.append(paths[i])
+        else:
+            p5.append(paths[i])
+
+    multp = [p1,p2,p3,p4,p5]
+
+    process_list = []
+    for i in multp:
+        print("开始运行")
+        p = Process(target=unit_find_face,args=(i,pass_dir_fr,fail_dir,'fr',))
+        p.start()
+        process_list.append(p)
+
+    for p in process_list:
+        p.join()
+
+
+    # use cv2 to check face
+
+    paths = readfile().listfiles(pass_dir_fr)
+
+    fail_dir = '{}/Downloads/finish_fail/'.format(str(Path.home()))
+    pass_dir_cv = '{}/Downloads/final_pass/'.format(str(Path.home()))
+
+    length = len(paths)
+
+    p1 = []
+    p2 = []
+    p3 = []
+    p4 = []
+    p5 = []
+
+    for i in range(length):
+        if i < round(length/5):
+            p1.append(paths[i])
+        elif i >= round(length/5) and i <(2*round(length/5)):
+            p2.append(paths[i])
+        elif i >= (2*round(length/5)) and i < (3*round(length/5)):
+            p3.append(paths[i])
+        elif i >= (3*round(length/5)) and i < (4*round(length/5)):
+            p4.append(paths[i])
+        else:
+            p5.append(paths[i])
+
+    multp = [p1,p2,p3,p4,p5]
+
+    process_list = []
+    for i in multp:
+        print("开始运行")
+        p = Process(target=unit_find_face,args=(i,pass_dir_cv,fail_dir,'cv2',))
+        p.start()
+        process_list.append(p)
+
+    for p in process_list:
+        p.join()
+
+
+    end = datetime.datetime.now()
+    print(f"总图片：{length} 张 {'*'*10} 用时：{(end - start).seconds} 秒 {'*'*10} 每秒：{round(length/int((end - start).seconds))} 张")
+
+
+
 def start(path):
 
     path = readfile().format_path(path)
@@ -459,7 +588,8 @@ def test(path):
 if __name__ == "__main__":
 
     if sys.argv[1] == 'face':
-        start(sys.argv[2])
+        # start(sys.argv[2])
+        multp_find_face(sys.argv[2])
 
     if sys.argv[1] == 'mark':
         path = readfile().format_path(sys.argv[2])
@@ -504,7 +634,8 @@ if __name__ == "__main__":
 
         # pool.shutdown()
 
-        test(sys.argv[2])
+        # test(sys.argv[2])
+        find_face_cv2(r"C:/Users/cn-wilsonshi/Downloads/finish_fail/3480549624.jpg", '.', '.')
 
     # face_detail(r"C:/Users/cn-wilsonshi/Downloads/old_version/glasses/20.jpg")
 
