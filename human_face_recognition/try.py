@@ -390,12 +390,6 @@ def testfast(path):
     for p in process_list:
         p.join()
 
-    # print('主进程获取Queue数据')
-    # new_video = []
-    # for i in multp:
-    #     new_video.append(q.get())
-    # print('结束测试')
-
 
     end = datetime.datetime.now()
     print(f"总图片：{length} 张 {'*'*10} 用时：{(end - start).seconds} 秒 {'*'*10} 每秒：{round(length/int((end - start).seconds))} 张")
