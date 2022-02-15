@@ -1,5 +1,7 @@
+from base64 import decode
 import datetime
 from itertools import count
+import json
 import os
 import time
 import face_recognition
@@ -12,6 +14,10 @@ import random
 from concurrent.futures import ThreadPoolExecutor
 from pytube import YouTube
 import numpy as np
+from multiprocessing import Process, Queue
+import pickle
+
+from sqlalchemy import true
 
 from find_face import readfile
 
@@ -120,7 +126,7 @@ def load_video(path):
     fourcc = cv2.VideoWriter_fourcc(*'XVID')
 
     #可以右键查看所读取的视频文件的帧速、率帧高度、帧宽度
-    output_video = cv2.VideoWriter('Obama.avi', fourcc, 25, (640, 360))
+    output_video = cv2.VideoWriter('ttttt.avi', fourcc, 25, (640, 360))
 
 
     for i in range(length):
@@ -178,39 +184,250 @@ def load_video(path):
     print(f"总图片：{length} 张 {'*'*10} 用时：{(end - start).seconds} 秒 {'*'*10} 每秒：{round(length/int((end - start).seconds))} 张")
 
 
-video = []
-def count_unit(img):
-    # print(f"这个图片的大小是{len(img)}")
-    face_landmarks_list = face_recognition.face_landmarks(img)
+# # 测试多线程
+# def count_unit(lis):
+#     # print(f"这个图片的大小是{len(img)}")
 
-    if face_landmarks_list: 
-        print("Yes")
-        video.append("1")
-    else: 
-        print("No")
-        video.append("0")
+#     ans = []
+#     for i in range(len(lis)):
+#         img = lis[i]
+#         face_landmarks_list = face_recognition.face_landmarks(img)
+
+#         if face_landmarks_list: 
+#             print("Yes")
+#             ans.append("1")
+#         else: 
+#             print("No")
+#             ans.append("0")
+#     return ans
 
 
-def testfast(path):
+# def testfast(path):
+#     start = datetime.datetime.now()
+
+#     input_video = cv2.VideoCapture(path)
+
+#     length = int(input_video.get(cv2.CAP_PROP_FRAME_COUNT))
+#     print("帧数: ", length)
+
+#     video_list = []
+#     for i in range(length):
+#         ret, image = input_video.read()
+#         video_list.append(image)
+
+#     p1v = video_list[:20]
+#     p2v = video_list[20:41]
+#     multp = [p1v, p2v]
+
+#     res = []
+#     pool = ThreadPoolExecutor(max_workers=2)
+#     for i in multp:
+#         res.append(pool.submit(count_unit, i))
+#     for i in res:
+#         print(i.result())
+
+#     pool.shutdown()
+
+
+
+# 测试多进程
+def unit_mark(dic):
+    start = datetime.datetime.now()
+
+    key = list(dic)[0]
+    lis = dic[key]
+
+    # 创建输出视频文件（确保输出视频文件的分辨率/帧速率与输入视频匹配）
+    fourcc = cv2.VideoWriter_fourcc(*'XVID')
+    #可以右键查看所读取的视频文件的帧速、率帧高度、帧宽度
+    output_video = cv2.VideoWriter(f'{key}.avi', fourcc, 25, (640, 360))
+
+    for i in range(len(lis)):
+        img = lis[i]
+        face_landmarks_list = face_recognition.face_landmarks(img)
+
+        print(f"{i+1}/{len(lis)}")
+
+        if face_landmarks_list: 
+            tmp = None
+            for face_landmarks in face_landmarks_list:
+                #打印此图像中每个面部特征的位置
+                facial_features = [
+                    'left_eyebrow',
+                    'right_eyebrow',
+                    'chin',
+                    'nose_bridge',
+                    'nose_tip',
+                    'left_eye',
+                    'right_eye',
+                    'top_lip',
+                    'bottom_lip'
+                ]
+
+                # for facial_feature in facial_features:
+                #     print("The {} in this face has the following points: {}".format(facial_feature, face_landmarks[facial_feature]))
+                
+                # # 获取面部标记点
+                # print("**"*40)
+
+                # 在图像中描绘出每个人脸特征！
+                pil_image = Image.fromarray(img) if not tmp else tmp
+                d = ImageDraw.Draw(pil_image)
+
+                for facial_feature in facial_features:
+                    d.line(face_landmarks[facial_feature], width=1)
+                tmp = pil_image
+
+                # pil_image.show()
+            image_arr = np.array(pil_image)
+            output_video.write(image_arr)
+
+        else: output_video.write(img)
+
+        t = int((datetime.datetime.now() - start).seconds)
+        if t >= 1:
+            print(f"{i}/{len(lis)} {'='*10} 每秒：{round(i/t)} 张")
+
+    output_video.release()
+
+
+    # out = {key:l}
+    # q.put(out)
+
+
+def prework(path):
     start = datetime.datetime.now()
 
     input_video = cv2.VideoCapture(path)
-
     length = int(input_video.get(cv2.CAP_PROP_FRAME_COUNT))
     print("帧数: ", length)
-
     video_list = []
+    p1v = []
+    p2v = []
     for i in range(length):
         ret, image = input_video.read()
-        video_list.append(image)
+        # video_list.append(image)
+        if i <= length//2:
+            p1v.append(image)
+        else:
+            p2v.append(image)
+    
+    # p1v = video_list[:20]
+    # p2v = video_list[20:41]
+    multp = [{'1':p1v}, {'2':p2v}]
 
-    pool = ThreadPoolExecutor(max_workers=2)
-    for i in video_list:
-        pool.submit(count_unit, i)
-    pool.shutdown()
+    f = open('prework.pickle', 'wb')
+    pickle.dump(multp, f)
+    f.close
+
+    end = datetime.datetime.now()
+    print(f"预处理视频用时：{(end - start).seconds} 秒")
+
+
+def deletefile(path):
+    while True:
+        try:
+            os.remove(path)
+            print(f"删除文件：{path}")
+            break
+        except Exception as error:
+            print("等待解除权限......")
+            time.sleep(2)
+
+
+def marge_video(multp):
+    # 创建输出视频文件（确保输出视频文件的分辨率/帧速率与输入视频匹配）
+    fourcc = cv2.VideoWriter_fourcc(*'XVID')
+    #可以右键查看所读取的视频文件的帧速、率帧高度、帧宽度
+    output_video = cv2.VideoWriter('test_marge.avi', fourcc, 25, (640, 360))
+
+    for i in multp:
+        part_video = cv2.VideoCapture(f"{list(i)[0]}.avi")
+        length = int(part_video.get(cv2.CAP_PROP_FRAME_COUNT))
+        for j in range(length):
+            ret, image = part_video.read()
+            output_video.write(image)
+
+    output_video.release()
+
+
+def testfast(path):
+
+    start = datetime.datetime.now()
+
+    input_video = cv2.VideoCapture(path)
+    length = int(input_video.get(cv2.CAP_PROP_FRAME_COUNT))
+
+    # length = 500
+
+    print("帧数: ", length)
+    p1v = []
+    p2v = []
+    p3v = []
+    p4v = []
+
+    for i in range(length):
+        ret, image = input_video.read()
+        if i < round(length/4):
+            p1v.append(image)
+        elif i >= round(length/4) and i <(2*round(length/4)):
+            p2v.append(image)
+        elif i >= (2*round(length/4)) and i < (3*round(length/4)):
+            p3v.append(image)
+        else:
+            p4v.append(image)
+
+    multp = [{'1':p1v}, {'2':p2v}, {'3':p3v}, {'4':p4v}]
+    
+    # q = Queue()
+    process_list = []
+    for i in multp:
+        print("开始运行")
+        p = Process(target=unit_mark,args=(i,))
+        p.start()
+        process_list.append(p)
+
+    for p in process_list:
+        p.join()
+
+    # print('主进程获取Queue数据')
+    # new_video = []
+    # for i in multp:
+    #     new_video.append(q.get())
+    # print('结束测试')
+
+
+    end = datetime.datetime.now()
+    print(f"总图片：{length} 张 {'*'*10} 用时：{(end - start).seconds} 秒 {'*'*10} 每秒：{round(length/int((end - start).seconds))} 张")
+
+
+    print("开始导出视频......")
+    start = datetime.datetime.now()
+
+    
+    p = Process(target=marge_video, args=(multp,))
+    p.start()
+    p.join()
+    
+
+    process_list = []
+    for i in multp:
+        path = f"{list(i)[0]}.avi"
+        p = Process(target=deletefile, args=(path,))
+        p.start()
+        process_list.append(p)
+    
+    for p in process_list:
+        p.join()
+
+    end = datetime.datetime.now()
+    print(f"导出视频用时：{(end - start).seconds} 秒")
+
+
 
 
 if __name__ == "__main__":
+    start = datetime.datetime.now()
 
     # pool = ThreadPoolExecutor(max_workers=2)
 
@@ -239,6 +456,77 @@ if __name__ == "__main__":
     # path = readfile().format_path(sys.argv[1])
     # show_face_mark(path)
 
-    load_video(r"C:\\Users\\cn-wilsonshi\\Downloads\\Obama.mp4")
+    # load_video(r"C:\\Users\\cn-wilsonshi\\Downloads\\videoplayback.mp4")
 
-    # testfast(r"C:\\Users\\cn-wilsonshi\\Downloads\\videoplayback.mp4")
+    testfast(r"C:\\Users\\cn-wilsonshi\\Downloads\\guanvideo.mp4")
+
+    # prework("C:\\Users\\cn-wilsonshi\\Downloads\\videoplayback.mp4")
+
+    
+    
+
+    # f = open('prework.pickle', 'rb')
+    # load_file = pickle.load(f)
+
+    # print(len(load_file[0]['1']))
+    # print(len(load_file[1]['2']))
+
+
+    # # 创建输出视频文件（确保输出视频文件的分辨率/帧速率与输入视频匹配）
+    # fourcc = cv2.VideoWriter_fourcc(*'XVID')
+    # #可以右键查看所读取的视频文件的帧速、率帧高度、帧宽度
+    # output_video = cv2.VideoWriter('1111111111.avi', fourcc, 25, (640, 360))
+
+    # for i in range(len(load_file)):
+    #     for img in load_file[i][str(i+1)]:
+    #         # img = np.array(img)
+    #         # print(img)
+    #         output_video.write(img)
+
+    # output_video.release()
+
+
+
+
+    # a = [1,2,3,4,5,6,7,8,9,10,11,12]
+
+    # p1v=[]
+    # p2v=[]
+    # p3v=[]
+    # p4v=[]
+
+    # for i in range(len(a)):
+    #     if i < round(len(a)/4):
+    #         p1v.append(a[i])
+    #     elif i >= round(len(a)/4) and i < (2*round(len(a)/4)):
+    #         p2v.append(a[i])
+    #     elif i >= (2*round(len(a)/4)) and i < (3*round(len(a)/4)):
+    #         p3v.append(a[i])
+    #     else:
+    #         p4v.append(a[i])
+
+    # print(a)
+    # print(p1v)
+    # print(p2v)
+    # print(p3v)
+    # print(p4v)
+
+
+
+    # # 创建输出视频文件（确保输出视频文件的分辨率/帧速率与输入视频匹配）
+    # fourcc = cv2.VideoWriter_fourcc(*'XVID')
+    # #可以右键查看所读取的视频文件的帧速、率帧高度、帧宽度
+    # output_video = cv2.VideoWriter('test_marge.avi', fourcc, 25, (640, 360))
+
+    # for i in [{'1':1}, {'2':1}, {'3':1}, {'4':1}]:
+    #     name = list(i)[0]
+    #     part_video = cv2.VideoCapture(f"{name}.avi")
+    #     length = int(part_video.get(cv2.CAP_PROP_FRAME_COUNT))
+    #     for j in range(length):
+    #         ret, image = part_video.read()
+    #         output_video.write(image)
+        
+    # output_video.release()
+
+    end = datetime.datetime.now()
+    print(f"程序总用时：{(end - start).seconds} 秒")

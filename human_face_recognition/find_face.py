@@ -13,6 +13,9 @@ from pathlib import Path
 import random
 import dlib
 from concurrent.futures import ThreadPoolExecutor
+from multiprocessing import Process
+
+import numpy as np
 
 class readfile():
 
@@ -71,7 +74,7 @@ def find_face_cv2(img_path):
     face_zone = face_detect.detectMultiScale(img, scaleFactor=1.1, minNeighbors=5)
     print ('识别人脸的信息：',face_zone)
 
-    if face_zone == ():
+    if face_zone != ():
 
         # 绘制矩形和圆形检测人脸
         for x, y, w, h in face_zone:
@@ -265,6 +268,48 @@ def show_face_mark(path):
 
 
 
+def unit_mark_face_detail(paths):
+    for path in paths:
+        mark_face_detail(path)
+
+
+def multprocess(paths):
+    start = datetime.datetime.now()
+    
+    length = len(paths)
+    p1 = []
+    p2 = []
+    p3 = []
+    p4 = []
+
+    for i in range(length):
+        if i < round(length/4):
+            p1.append(paths[i])
+        elif i >= round(length/4) and i <(2*round(length/4)):
+            p2.append(paths[i])
+        elif i >= (2*round(length/4)) and i < (3*round(length/4)):
+            p3.append(paths[i])
+        else:
+            p4.append(paths[i])
+
+    multp = [p1,p2,p3,p4]
+    
+    # q = Queue()
+    process_list = []
+    for i in multp:
+        print("开始运行")
+        p = Process(target=unit_mark_face_detail,args=(i,))
+        p.start()
+        process_list.append(p)
+
+    for p in process_list:
+        p.join()
+
+
+    end = datetime.datetime.now()
+    print(f"总图片：{length} 张 {'*'*10} 用时：{(end - start).seconds} 秒 {'*'*10} 每秒：{round(length/int((end - start).seconds))} 张")
+
+
 
 def start(path):
 
@@ -331,6 +376,83 @@ def start(path):
         \n通过率 {round(len(tmp_pass4)/len(paths)*100, 2)}%")
 
 
+def test(path):
+
+    img = cv2.imread(path)
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    detector = dlib.get_frontal_face_detector()
+    rects = detector(gray, 0)
+    predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
+    dets = detector(img, 1)
+
+    for k, d in enumerate(dets):
+        print("dets{}".format(d))
+        print("Detection {}: Left: {} Top: {} Right: {} Bottom: {}".format(
+            k, d.left(), d.top(), d.right(), d.bottom()))
+    
+        # 使用predictor进行人脸关键点识别 shape为返回的结果
+        shape = predictor(img, d)
+
+
+        # # 获取第一个和第二个点的坐标（相对于图片而不是框出来的人脸）
+        # print("Part 0: {}, Part 1: {} ...".format(shape.part(0), shape.part(1)))
+    
+        # # 绘制特征点
+        # for index, pt in enumerate(shape.parts()):
+        #     print('Part {}: {}'.format(index, pt))
+        #     pt_pos = (pt.x, pt.y)
+        #     cv2.circle(img, pt_pos, 1, (255, 0, 0), 2)
+        #     #利用cv2.putText输出1-68
+        #     font = cv2.FONT_HERSHEY_SIMPLEX
+        #     cv2.putText(img, str(index+1),pt_pos,font, 0.3, (0, 0, 255), 1, cv2.LINE_AA)
+
+        def shape_to_np(dlib_shape, dtype="int"):
+            # 初始化 (x, y) 坐标列表
+            coordinates = np.zeros((dlib_shape.num_parts, 2), dtype=dtype)
+            # 循环所有面部特征点，并将其转换为 (x, y) 坐标的元组
+            for i in range(0, dlib_shape.num_parts):
+                coordinates[i] = (dlib_shape.part(i).x, dlib_shape.part(i).y)
+            # 返回 (x,y) 坐标的列表
+            return coordinates
+
+        # 定义不同特征点取值切片
+        JAWLINE_POINTS = list(range(0, 17))
+        RIGHT_EYEBROW_POINTS = list(range(17, 22))
+        LEFT_EYEBROW_POINTS = list(range(22, 27))
+        NOSE_BRIDGE_POINTS = list(range(27, 31))
+        LOWER_NOSE_POINTS = list(range(31, 36))
+        RIGHT_EYE_POINTS = list(range(36, 42))
+        LEFT_EYE_POINTS = list(range(42, 48))
+        MOUTH_OUTLINE_POINTS = list(range(48, 61))
+        MOUTH_INNER_POINTS = list(range(61, 68))
+        ALL_POINTS = list(range(0, 68))
+        # 使用线条绘制面部特征点
+        def draw_shape_lines_all(np_shape, image):
+            draw_shape_lines_range(np_shape, image, JAWLINE_POINTS)
+            draw_shape_lines_range(np_shape, image, RIGHT_EYEBROW_POINTS)
+            draw_shape_lines_range(np_shape, image, LEFT_EYEBROW_POINTS)
+            draw_shape_lines_range(np_shape, image, NOSE_BRIDGE_POINTS)
+            draw_shape_lines_range(np_shape, image, LOWER_NOSE_POINTS)
+            draw_shape_lines_range(np_shape, image, RIGHT_EYE_POINTS, True)
+            draw_shape_lines_range(np_shape, image, LEFT_EYE_POINTS, True)
+            draw_shape_lines_range(np_shape, image, MOUTH_OUTLINE_POINTS, True)
+            draw_shape_lines_range(np_shape, image, MOUTH_INNER_POINTS, True)
+
+        # 连接不同的点来绘制曲线形状
+        def draw_shape_lines_range(np_shape, image, range_points, is_closed=False):
+            np_shape_display = np_shape[range_points]
+            points = np.array(np_shape_display, dtype=np.int32)
+            cv2.polylines(image, [points], is_closed, (255, 255, 0), thickness=2, lineType=cv2.LINE_8)
+
+        # 函数调用
+        draw_shape_lines_all(shape_to_np(shape), img)
+ 
+    cv2.imshow('img', img)
+    k = cv2.waitKey()
+    cv2.destroyAllWindows()
+
+
+
 if __name__ == "__main__":
 
     if sys.argv[1] == 'face':
@@ -359,19 +481,27 @@ if __name__ == "__main__":
         path = readfile().format_path(sys.argv[2])
         show_face_mark(path)
 
-    if sys.argv[1] == 'test':
-        pool = ThreadPoolExecutor(max_workers=2)
-
+    if sys.argv[1] == 'mult':
         path = readfile().format_path(sys.argv[2])
         paths = readfile().listfiles(path)
 
-        for i in paths:
-            t = pool.submit(mark_face_detail, i)
-            # if not t.running():
-            #     time.sleep(5)
-            # print(i)
+        multprocess(paths)
 
-        pool.shutdown()
+    if sys.argv[1] == 'test':
+        # pool = ThreadPoolExecutor(max_workers=2)
+
+        # path = readfile().format_path(sys.argv[2])
+        # paths = readfile().listfiles(path)
+
+        # for i in paths:
+        #     t = pool.submit(mark_face_detail, i)
+        #     # if not t.running():
+        #     #     time.sleep(5)
+        #     # print(i)
+
+        # pool.shutdown()
+
+        test(sys.argv[2])
 
     # face_detail(r"C:/Users/cn-wilsonshi/Downloads/old_version/glasses/20.jpg")
 
