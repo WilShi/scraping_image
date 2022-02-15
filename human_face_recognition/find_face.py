@@ -241,6 +241,7 @@ def show_face_mark(path):
 
     #打印此图像中每个面部特征的位置
     facial_features = [
+        'chin',
         'nose_bridge',
         'left_eye',
         'right_eye',
