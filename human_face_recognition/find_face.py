@@ -330,6 +330,7 @@ def multprocess(paths):
 def unit_find_face(pathlist, pass_dir, fail_dir, mode):
     ps = []
     fl = []
+    coun = 1
 
     if mode == 'fr':
         for path in pathlist:
@@ -337,12 +338,16 @@ def unit_find_face(pathlist, pass_dir, fail_dir, mode):
                 ps.append(path)
             else:
                 fl.append(path)
+            print(f"识别进度：{coun} / {len(pathlist)}")
+            coun += 1
     if mode == 'cv2':
         for path in pathlist:
             if find_face_cv2(path, pass_dir, fail_dir):
                 ps.append(path)
             else:
                 fl.append(path)
+            print(f"识别进度：{coun} / {len(pathlist)}")
+            coun += 1
 
     for i in ps:
         if not os.path.exists(pass_dir): os.makedirs(pass_dir)
@@ -372,20 +377,23 @@ def multp_find_face(path):
     p3 = []
     p4 = []
     p5 = []
+    p6 = []
 
     for i in range(length):
-        if i < round(length/5):
+        if i < round(length/6):
             p1.append(paths[i])
-        elif i >= round(length/5) and i <(2*round(length/5)):
+        elif i >= round(length/6) and i <(2*round(length/6)):
             p2.append(paths[i])
-        elif i >= (2*round(length/5)) and i < (3*round(length/5)):
+        elif i >= (2*round(length/6)) and i < (3*round(length/6)):
             p3.append(paths[i])
-        elif i >= (3*round(length/5)) and i < (4*round(length/5)):
+        elif i >= (3*round(length/6)) and i < (4*round(length/6)):
             p4.append(paths[i])
-        else:
+        elif i >= (4*round(length/6)) and i < (5*round(length/6)):
             p5.append(paths[i])
+        else:
+            p6.append(paths[i])
 
-    multp = [p1,p2,p3,p4,p5]
+    multp = [p1,p2,p3,p4,p5,p6]
 
     process_list = []
     for i in multp:
@@ -412,25 +420,28 @@ def multp_find_face(path):
     p3 = []
     p4 = []
     p5 = []
+    p6 = []
 
     for i in range(length):
-        if i < round(length/5):
+        if i < round(length/6):
             p1.append(paths[i])
-        elif i >= round(length/5) and i <(2*round(length/5)):
+        elif i >= round(length/6) and i <(2*round(length/6)):
             p2.append(paths[i])
-        elif i >= (2*round(length/5)) and i < (3*round(length/5)):
+        elif i >= (2*round(length/6)) and i < (3*round(length/6)):
             p3.append(paths[i])
-        elif i >= (3*round(length/5)) and i < (4*round(length/5)):
+        elif i >= (3*round(length/6)) and i < (4*round(length/6)):
             p4.append(paths[i])
-        else:
+        elif i >= (4*round(length/6)) and i < (5*round(length/6)):
             p5.append(paths[i])
+        else:
+            p6.append(paths[i])
 
-    multp = [p1,p2,p3,p4,p5]
+    multp = [p1,p2,p3,p4,p5,p6]
 
     process_list = []
     for i in multp:
         print("开始运行")
-        p = Process(target=unit_find_face,args=(i,pass_dir_cv,fail_dir,'cv2',))
+        p = Process(target=unit_find_face,args=(i,pass_dir_cv,fail_dir,'fr',))
         p.start()
         process_list.append(p)
 
@@ -506,6 +517,11 @@ def start(path):
     print(f"总图片：{len(paths)} 张 {'*'*10} 用时：{(end - start).seconds} 秒 \
         \n通过了 {len(tmp_pass4)} 张图片 {'*'*10} 否定了 {len(tmp_fail)} 张图片 \
         \n通过率 {round(len(tmp_pass4)/len(paths)*100, 2)}%")
+
+
+def deletefile(path):
+    os.remove(path)
+    print(f"删除文件：{path}")
 
 
 def test(path):
@@ -589,7 +605,14 @@ if __name__ == "__main__":
 
     if sys.argv[1] == 'face':
         # start(sys.argv[2])
-        multp_find_face(sys.argv[2])
+
+        p = Process(target=multp_find_face, args=(sys.argv[2],))
+        p.start()
+        p.join()
+        
+        p = Process(target=deletefile, args=('{}/Downloads/fr_pass/'.format(str(Path.home())),))
+        p.start()
+        p.join()
 
     if sys.argv[1] == 'mark':
         path = readfile().format_path(sys.argv[2])
