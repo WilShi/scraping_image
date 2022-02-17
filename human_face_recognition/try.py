@@ -419,6 +419,44 @@ def testfast(path):
 
 
 
+def bin_image(path):
+
+    SCALE = 0.3
+    #等比例缩放
+
+    def get_char(pixel, blank_char='0', fill_char='1'):
+        print(pixel)
+
+        if pixel == 0:
+            return blank_char
+        else:
+            return fill_char
+
+
+
+    im = Image.open(path)
+    size = im.size
+    #获取图片的像素
+    #size[0]*size[1] 横宽像素
+    width, height = int(size[0] * SCALE), int(size[1] * SCALE)
+    im = im.resize((width, height))#修改图片尺寸
+    im = im.convert('2')#获得二值图像
+
+    im.show()
+
+    txt = ""
+    for i in range(height):
+        for j in range(width):
+            txt += get_char(im.getpixel((j, i)))#getpixel是获取图像中某一点像素的RGB颜色值
+        txt += '\n'
+    #print(txt)
+    # f = open(r'gou.txt', 'w')
+
+    print(txt)
+
+    # f.close()
+
+
 
 if __name__ == "__main__":
     start = datetime.datetime.now()
@@ -452,7 +490,9 @@ if __name__ == "__main__":
 
     # load_video(r"C:\\Users\\cn-wilsonshi\\Downloads\\videoplayback.mp4")
 
-    testfast(r"C:\\Users\\cn-wilsonshi\\Downloads\\guanvideo.mp4")
+    # testfast(r"C:\\Users\\cn-wilsonshi\\Downloads\\guanvideo.mp4")
+
+    bin_image(r"C:\\Users\\cn-wilsonshi\\Downloads\\finish\\111\\153065424.jpg")
 
     # prework("C:\\Users\\cn-wilsonshi\\Downloads\\videoplayback.mp4")
 

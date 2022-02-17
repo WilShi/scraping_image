@@ -3,6 +3,7 @@ import datetime
 from itertools import count
 import os
 import re
+import shutil
 import time
 import face_recognition
 import cv2
@@ -14,6 +15,7 @@ import random
 import dlib
 from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import Process
+from threading import Thread
 
 import numpy as np
 
@@ -368,7 +370,7 @@ def multp_find_face(path):
     paths = readfile().listfiles(path)
 
     fail_dir = '{}/Downloads/finish_fail/'.format(str(Path.home()))
-    pass_dir_fr = '{}/Downloads/fr_pass/'.format(str(Path.home()))
+    pass_dir_fr = 'fr_pass/'
 
     length = len(paths)
 
@@ -520,8 +522,20 @@ def start(path):
 
 
 def deletefile(path):
-    os.remove(path)
-    print(f"删除文件：{path}")
+    if os.path.isdir(path):
+        # os.remove(path)
+        subfiles = readfile().listfiles(path)
+        pool = ThreadPoolExecutor(max_workers=10)
+        for file in subfiles:
+            pool.submit(deletefile, file)
+        pool.shutdown()
+
+        shutil.rmtree(path)
+        print(f"删除文件夹：{path}")
+        
+    else:
+        os.remove(path)
+        # print(f"删除文件：{path}")
 
 
 def test(path):
@@ -610,7 +624,7 @@ if __name__ == "__main__":
         p.start()
         p.join()
         
-        p = Process(target=deletefile, args=('{}/Downloads/fr_pass/'.format(str(Path.home())),))
+        p = Process(target=deletefile, args=('fr_pass/',))
         p.start()
         p.join()
 
@@ -637,11 +651,17 @@ if __name__ == "__main__":
         path = readfile().format_path(sys.argv[2])
         show_face_mark(path)
 
-    if sys.argv[1] == 'mult':
+    if sys.argv[1] == 'multmark':
         path = readfile().format_path(sys.argv[2])
         paths = readfile().listfiles(path)
 
         multprocess(paths)
+
+    if sys.argv[1] == 'delete':
+        start = start = datetime.datetime.now()
+        deletefile(sys.argv[2])
+        end = datetime.datetime.now()
+        print(f"删除文件用时：{(end-start).seconds} 秒")
 
     if sys.argv[1] == 'test':
         # pool = ThreadPoolExecutor(max_workers=2)
@@ -658,7 +678,8 @@ if __name__ == "__main__":
         # pool.shutdown()
 
         # test(sys.argv[2])
-        find_face_cv2(r"C:/Users/cn-wilsonshi/Downloads/finish_fail/3480549624.jpg", '.', '.')
+        # find_face_cv2(r"C:/Users/cn-wilsonshi/Downloads/finish_fail/3480549624.jpg", '.', '.')
+        deletefile(sys.argv[2])
 
     # face_detail(r"C:/Users/cn-wilsonshi/Downloads/old_version/glasses/20.jpg")
 
