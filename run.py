@@ -104,7 +104,7 @@ class MyMainForm(QMainWindow, Ui_Form):
         print("文件路径为：{}".format(self.craw.format_path(dir)))
         print('#'*50)
 
-        self.textBrowser.setText("图片爬取结束！！！！\n\n文件保存在:\n\n{}\n\n本文件没有压缩，如需压缩可以将文件路径复制进‘链接/关键词’的输入框然后点击压缩按钮......".format(self.craw.format_path(dir)))
+        self.textBrowser.setText("图片爬取结束！！！！\n\n文件保存在:\n\n{}\n\n本文件没有压缩，如需压缩可以将文件路径复制进‘链接/关键词’的输入框然后点击压缩按钮......\n\n本次下载图片:{}张".format(self.craw.format_path(dir), self.craw.countfile(dir)))
         QApplication.processEvents()
 
         return self.craw.format_path(dir)
